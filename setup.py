@@ -1,3 +1,6 @@
+### Esse arquivo foi uma tentativa de transformar o jogo em um executável
+###
+### Não funcionou, mas talvez ajude nas próximas tentativas
 import cx_Freeze
 
 executables = [cx_Freeze.Executable("app.py")]
