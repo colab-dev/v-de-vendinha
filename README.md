@@ -2,9 +2,9 @@
 
 O jogo oficial do V de Vegança. Capture o máximo de produtos e ingredientes veganos, e não deixe nada com ingredientes de origem animal cair na sua cesta.
 
-<img src="docs/images/game.png" />
+![Game](docs/images/game.png)
 
-<img src="docs/images/game-over.png" />
+![Game over](docs/images/game-over.png)
 
 # Pré-requisitos
 
