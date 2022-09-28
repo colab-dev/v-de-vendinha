@@ -8,7 +8,7 @@
 import pygame, sys
 from pygame.locals import *
 import random, time
-
+import glob2
 pygame.init()
 
 ### Setting up FPS
@@ -49,7 +49,7 @@ image_not_scaled = pygame.image.load("./resources/images/brocolis.png")
 life_icon = pygame.transform.scale(image_not_scaled, (32, 32))
 
 
-vegan_products_list = ["./resources/images/onion.png", "./resources/images/eggplant.png", "./resources/images/bell-pepper.png"]
+vegan_products_list = glob2.glob("./resources/images/vegan/*.png")
 
 class VeganProducts(pygame.sprite.Sprite):
       def __init__(self):
@@ -78,7 +78,7 @@ class VeganProducts(pygame.sprite.Sprite):
         surface.blit(self.image, self.rect)
 
 
-enemies_list = ["./resources/images/beef.png", "./resources/images/cheese.png", "./resources/images/chicken.png"]
+enemies_list = glob2.glob("./resources/images/enemies/*.png")
 
 class Enemies(pygame.sprite.Sprite):
     def __init__(self):
@@ -242,7 +242,7 @@ while True:
         for entity in all_sprites:
             entity.kill()
 
-        print(SCORE)
+        print("Final Score: ", SCORE)
 
         time.sleep(3)
         pygame.quit()
