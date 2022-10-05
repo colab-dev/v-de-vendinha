@@ -33,6 +33,10 @@ font = pygame.font.SysFont("Verdana", 20)
 start_instruction = font.render("Aperte Espaço para começar...", True, GRAY)
 font_small = pygame.font.SysFont("Verdana", 20)
 
+### Setting up Icon
+pygame_icon = pygame.image.load('./resources/images/v-icon.png')
+pygame.display.set_icon(pygame_icon)
+
 ### Laoding Game Over image
 game_over = pygame.image.load("./resources/images/gameover.png")
 
