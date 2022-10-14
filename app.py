@@ -26,7 +26,7 @@ SCREEN_HEIGHT = 450
 SPEED = 0
 SCORE = 0
 START = 0
-LIFES = 3
+LIVES = 3
 
 ### Setting up Fonts
 font = pygame.font.SysFont("Verdana", 20)
@@ -37,7 +37,10 @@ font_small = pygame.font.SysFont("Verdana", 20)
 pygame_icon = pygame.image.load('./resources/images/v-icon.png')
 pygame.display.set_icon(pygame_icon)
 
-### Laoding Game Over image
+### Loading Cover image
+cover = pygame.image.load("./resources/images/cover.png")
+
+### Loading Game Over image
 game_over = pygame.image.load("./resources/images/gameover.png")
 
 image_not_scaled = pygame.image.load("./resources/images/GroceryShelf.png")
@@ -51,7 +54,6 @@ pygame.display.set_caption("V de Vendinha")
 ### Life icon
 image_not_scaled = pygame.image.load("./resources/images/brocolis.png")
 life_icon = pygame.transform.scale(image_not_scaled, (32, 32))
-
 
 vegan_products_list = glob2.glob("./resources/images/vegan/*.png")
 
@@ -71,15 +73,13 @@ class VeganProducts(pygame.sprite.Sprite):
             self.reappear()
 
       def reappear(self):
+        self.update()
         self.rect.top = 0 + random.randint(0, 50)
         self.rect.center = (random.randint(30, SCREEN_WIDTH-30), 0)
 
       def update(self):
         image_not_scaled = pygame.image.load(random.choice(vegan_products_list))
         self.image = pygame.transform.scale(image_not_scaled, (64, 64))
-
-      def draw(self, surface):
-        surface.blit(self.image, self.rect)
 
 
 enemies_list = glob2.glob("./resources/images/enemies/*.png")
@@ -98,16 +98,15 @@ class Enemies(pygame.sprite.Sprite):
         if (self.rect.top > SCREEN_HEIGHT):
             self.update()
             self.reappear()
+
     def reappear(self):
+        self.update()
         self.rect.top = 0 + random.randint(0, 50)
         self.rect.center = (random.randint(30, SCREEN_WIDTH-30), 0)
 
     def update(self):
         image_not_scaled = pygame.image.load(random.choice(enemies_list))
         self.image = pygame.transform.scale(image_not_scaled, (64, 64))
-
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
 
 
 class Player(pygame.sprite.Sprite):
@@ -128,17 +127,49 @@ class Player(pygame.sprite.Sprite):
               if pressed_keys[K_RIGHT]:
                   self.rect.move_ip(5, 0)
 
-    def draw(self, surface):
-        surface.blit(self.image, self.rect)
+
+class ExtraLife(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        
+        ### Life icon
+        image_not_scaled = pygame.image.load("./resources/images/brocolis.png")
+        self.image = pygame.transform.scale(image_not_scaled, (48, 48))
+
+        self.rect = self.image.get_rect()
+
+        self.rect.center = (random.randint(30, SCREEN_WIDTH-30), SCREEN_HEIGHT + 50)
+
+    def move(self):
+        self.rect.move_ip(0, SPEED * 0.80)
+        if (self.rect.top > SCREEN_HEIGHT):
+            self.rect.move_ip(0, 0)
+            
+    def reappear(self):
+        self.rect.top = 0 + random.randint(0, 50)
+        self.rect.center = (random.randint(30, SCREEN_WIDTH-30), 0)
+
+    def hide(self):
+        self.rect.top = SCREEN_HEIGHT
+
+    def reappear_by_chance(self):
+        if self.rect.top > SCREEN_HEIGHT and LIVES < 5 and SCORE > 60:
+            if random.randint(0, 10) == 1:
+                self.reappear()
+
 
 ### Setting up Sprites
 P1 = Player()
+
 VP1 = VeganProducts()
 VP2 = VeganProducts()
 VP3 = VeganProducts()
 VP4 = VeganProducts()
+
 E1 = Enemies()
 E2 = Enemies()
+
+EL = ExtraLife()
 
 ### Creating Sprites Groups
 veganProducts = pygame.sprite.Group()
@@ -154,7 +185,7 @@ all_sprites.add(VP1)
 INC_SPEED = pygame.USEREVENT + 1       # Makes the event unique
 pygame.time.set_timer(INC_SPEED, 1000) # Fires the event every 1000 ms (this will increase the speed later in the code)
 
-
+### Adding background music
 pygame.mixer.music.load('./resources/audio/background.wav')
 pygame.mixer.music.play(-1)  # -1 makes music play in a loop
 
@@ -164,17 +195,29 @@ for event in events:
         if event.key == pygame.K_SPACE:
             START = 1
 
-while True:
-
-    ### Cycles through all events occuring
+while not START:
     for event in pygame.event.get():
 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and START == 0:
+            if event.key == pygame.K_SPACE:
                 START = 1
                 SPEED = 5
 
-        if event.type == INC_SPEED and START == 1:
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+    
+    DISPLAYSURF.blit(cover, (0,0))
+    DISPLAYSURF.blit(start_instruction, (130,375))
+
+    pygame.display.update()
+    FramePerSec.tick(1)
+
+
+while START:
+    ### Cycles through all events occuring
+    for event in pygame.event.get():
+        if event.type == INC_SPEED:
               SPEED += 0.05
 
         if event.type == QUIT:
@@ -183,15 +226,11 @@ while True:
 
     DISPLAYSURF.blit(background, (0,0))
 
-    if START == 0:
-        DISPLAYSURF.blit(start_instruction, (120,50))
-
     scores = font_small.render(str(SCORE), True, BLACK)
     DISPLAYSURF.blit(scores, (SCREEN_WIDTH/2, 10))
 
-    for i in range(LIFES):
+    for i in range(LIVES):
         DISPLAYSURF.blit(life_icon, ((10 + 40*i), 10))
-
 
     ### Set levels
     if SCORE == 20:
@@ -210,30 +249,35 @@ while True:
         enemies.add(E2)
         all_sprites.add(E2)
 
-
     ### Moves and Re-draws all Sprites
     for entity in all_sprites:
         DISPLAYSURF.blit(entity.image, entity.rect)
         entity.move()
 
+    ### Moves the Extra Life Sprite       
+    DISPLAYSURF.blit(EL.image, EL.rect)
+    EL.move()
+
     ### To be run if collision occurs between Player and VeganProducts
     if pygame.sprite.spritecollideany(P1, veganProducts):
-
-        pygame.sprite.spritecollideany(P1, veganProducts).update()
         pygame.sprite.spritecollideany(P1, veganProducts).reappear()
-
         SCORE += 1
+        EL.reappear_by_chance()
 
     ### To be run if collision occurs between Player and Enemies
     if pygame.sprite.spritecollideany(P1, enemies):
         pygame.mixer.Sound('./resources/audio/fail.wav').play()
-
-        pygame.sprite.spritecollideany(P1, enemies).update()
         pygame.sprite.spritecollideany(P1, enemies).reappear()
+        LIVES -= 1
+    
+    ### To be run if collision occurs between Player and Extra Lives
+    if pygame.sprite.collide_rect(P1, EL):
+        pygame.mixer.Sound('./resources/audio/extralife.wav').play()
+        EL.hide()
+        LIVES += 1
 
-        LIFES -= 1
-
-    if LIFES == 0:
+    ### Game Over
+    if LIVES == 0:
         pygame.mixer.music.stop()
         pygame.mixer.Sound('./resources/audio/gameover.wav').play()
         time.sleep(0.5)
