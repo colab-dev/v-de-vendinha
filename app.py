@@ -33,7 +33,10 @@ font = pygame.font.SysFont("Verdana", 20)
 start_instruction = font.render("Aperte Espaço para começar...", True, GRAY)
 font_small = pygame.font.SysFont("Verdana", 20)
 
-### Laoding Game Over image
+### Loading Cover image
+cover = pygame.image.load("./resources/images/cover.png")
+
+### Loading Game Over image
 game_over = pygame.image.load("./resources/images/gameover.png")
 
 image_not_scaled = pygame.image.load("./resources/images/GroceryShelf.png")
@@ -182,17 +185,35 @@ pygame.time.set_timer(INC_SPEED, 1000) # Fires the event every 1000 ms (this wil
 pygame.mixer.music.load('./resources/audio/background.wav')
 pygame.mixer.music.play(-1)  # -1 makes music play in a loop
 
-while True:
+events = pygame.event.get()
+for event in events:
+    if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_SPACE:
+            START = 1
 
-    ### Cycles through all events occuring
+while not START:
     for event in pygame.event.get():
 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and START == 0:
+            if event.key == pygame.K_SPACE:
                 START = 1
                 SPEED = 5
 
-        if event.type == INC_SPEED and START == 1:
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+    
+    DISPLAYSURF.blit(cover, (0,0))
+    DISPLAYSURF.blit(start_instruction, (130,375))
+
+    pygame.display.update()
+    FramePerSec.tick(1)
+
+
+while START:
+    ### Cycles through all events occuring
+    for event in pygame.event.get():
+        if event.type == INC_SPEED:
               SPEED += 0.05
 
         if event.type == QUIT:
@@ -200,8 +221,6 @@ while True:
             sys.exit()
 
     DISPLAYSURF.blit(background, (0,0))
-
-    START == 0 and DISPLAYSURF.blit(start_instruction, (120,50))
 
     scores = font_small.render(str(SCORE), True, BLACK)
     DISPLAYSURF.blit(scores, (SCREEN_WIDTH/2, 10))
