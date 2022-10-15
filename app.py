@@ -283,7 +283,10 @@ while START:
         time.sleep(0.5)
 
         DISPLAYSURF.fill(WHITE)
-        DISPLAYSURF.blit(game_over, (0,0))
+        DISPLAYSURF.blit(game_over, (0,-30))
+
+        final_score = font_small.render("Final Score: " + str(SCORE), True, BLACK)
+        DISPLAYSURF.blit(final_score, (SCREEN_WIDTH/2 - 85, 400))
 
         pygame.display.update()
 
