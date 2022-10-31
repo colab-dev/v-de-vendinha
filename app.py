@@ -5,6 +5,7 @@
 #  File "app.py", line 26
 #  SyntaxError: Non-ASCII character '\xc3' in file app.py on line 26, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
 
+from ast import Pow
 import pygame, sys
 from pygame.locals import *
 import random, time
@@ -24,9 +25,12 @@ WHITE = (255, 255, 255)
 SCREEN_WIDTH = 550
 SCREEN_HEIGHT = 450
 SPEED = 0
+OLD_SPEED = 5
 SCORE = 0
 START = 0
 LIVES = 3
+POWERUP = 0
+consecutivePoints = 0
 
 ### Setting up Fonts
 font = pygame.font.SysFont("Verdana", 20)
@@ -54,6 +58,10 @@ pygame.display.set_caption("V de Vendinha")
 ### Life icon
 image_not_scaled = pygame.image.load("./resources/images/brocolis.png")
 life_icon = pygame.transform.scale(image_not_scaled, (32, 32))
+
+### Power-Up 
+image_not_scaled = pygame.image.load("./resources/images/mushroom.png")
+powerup_icon = pygame.transform.scale(image_not_scaled, (32, 32))
 
 vegan_products_list = glob2.glob("./resources/images/vegan/*.png")
 
@@ -157,6 +165,34 @@ class ExtraLife(pygame.sprite.Sprite):
             if random.randint(0, 10) == 1:
                 self.reappear()
 
+class PowerUp(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        
+        ### Power-Up Icon
+        image_not_scaled = pygame.image.load("./resources/images/mushroom.png")
+        self.image = pygame.transform.scale(image_not_scaled, (48, 48))
+
+        self.rect = self.image.get_rect()
+
+        self.rect.center = (random.randint(30, SCREEN_WIDTH-30), SCREEN_HEIGHT + 50)
+
+    def move(self):
+        self.rect.move_ip(0, SPEED * 0.80)
+        if (self.rect.top > SCREEN_HEIGHT):
+            self.rect.move_ip(0, 0)
+            
+    def reappear(self):
+        self.rect.top = 0 + random.randint(0, 50)
+        self.rect.center = (random.randint(30, SCREEN_WIDTH-30), 0)
+
+    def hide(self):
+        self.rect.top = SCREEN_HEIGHT
+
+    def reappear_if_condition(self):
+        if self.rect.top > SCREEN_HEIGHT and consecutivePoints > 15 and POWERUP != 1 and SCORE > 40:
+            self.reappear()
+
 
 ### Setting up Sprites
 P1 = Player()
@@ -170,6 +206,8 @@ E1 = Enemies()
 E2 = Enemies()
 
 EL = ExtraLife()
+
+PU = PowerUp()
 
 ### Creating Sprites Groups
 veganProducts = pygame.sprite.Group()
@@ -232,6 +270,9 @@ while START:
     for i in range(LIVES):
         DISPLAYSURF.blit(life_icon, ((10 + 40*i), 10))
 
+    if (POWERUP):
+        DISPLAYSURF.blit(powerup_icon, (10, 50))
+
     ### Set levels
     if SCORE == 20:
         veganProducts.add(VP2)
@@ -258,23 +299,44 @@ while START:
     DISPLAYSURF.blit(EL.image, EL.rect)
     EL.move()
 
+    ### Moves the Power-Up Sprite       
+    DISPLAYSURF.blit(PU.image, PU.rect)
+    PU.move()
+
     ### To be run if collision occurs between Player and VeganProducts
     if pygame.sprite.spritecollideany(P1, veganProducts):
         pygame.sprite.spritecollideany(P1, veganProducts).reappear()
         SCORE += 1
+        consecutivePoints += 1
         EL.reappear_by_chance()
+        PU.reappear_if_condition()
+
 
     ### To be run if collision occurs between Player and Enemies
     if pygame.sprite.spritecollideany(P1, enemies):
         pygame.mixer.Sound('./resources/audio/fail.wav').play()
         pygame.sprite.spritecollideany(P1, enemies).reappear()
         LIVES -= 1
+
+        consecutivePoints = 0
+        POWERUP = 0
+        if (OLD_SPEED > SPEED):
+            SPEED = OLD_SPEED
     
     ### To be run if collision occurs between Player and Extra Lives
     if pygame.sprite.collide_rect(P1, EL):
         pygame.mixer.Sound('./resources/audio/extralife.wav').play()
         EL.hide()
         LIVES += 1
+
+    ### To be run if collision occurs between Player and Power-Up
+    if pygame.sprite.collide_rect(P1, PU):
+        # pygame.mixer.Sound('./resources/audio/powerup.wav').play()
+        PU.hide()
+        consecutivePoints = 0
+        POWERUP = 1
+        OLD_SPEED = SPEED
+        SPEED = SPEED * 0.75
 
     ### Game Over
     if LIVES == 0:
